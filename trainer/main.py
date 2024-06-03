@@ -10,10 +10,16 @@ def main():
     parser.add_argument("--test", action="store_true", help="Test the trained model")
     parser.add_argument("--image-path", type=str, help="Path to an image for testing")
     parser.add_argument(
-        "--batch-size", type=int, default=32, help="Batch size for training and testing"
+        "--dataset-dir",
+        type=str,
+        default="datasets",
+        help="Path to the dataset directory",
     )
     parser.add_argument(
-        "--epochs", type=int, default=10, help="Number of epochs for training"
+        "--batch-size", type=int, default=16, help="Batch size for training and testing"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=5, help="Number of epochs for training"
     )
     parser.add_argument(
         "--image-size",
@@ -33,7 +39,7 @@ def main():
 
     if args.prepare_data:
         prepare_data(
-            "./data_directory",
+            args.dataset_dir,
             image_size=tuple(args.image_size),
             processed_directory="./processed_data",
         )

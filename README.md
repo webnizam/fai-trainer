@@ -24,9 +24,13 @@ Usage
 
 ### Data Preparation
 
-To prepare the data with a specified image size:
+To prepare the data with a specified image size (default dataset directory is `datasets`):
 
     train-model --prepare-data --image-size 224 224
+
+To specify a different dataset directory:
+
+    train-model --prepare-data --dataset-dir path/to/your/dataset --image-size 224 224
 
 ### Model Training
 
@@ -53,18 +57,22 @@ To test the model on the validation dataset:
 Directory Structure
 -------------------
 
-Ensure your project directory has the following structure:
+Ensure your dataset directory has the following structure:
 
     
-    fai_trainer/
-    ├── __init__.py
-    ├── data_preparation.py
-    ├── model_training.py
-    ├── utils.py
-    ├── main.py
-    setup.py
-    requirements.txt
-    README.md
+    datasets/
+    ├── class1/
+    │   ├── image1.jpg
+    │   ├── image2.jpg
+    │   └── ...
+    ├── class2/
+    │   ├── image1.jpg
+    │   ├── image2.jpg
+    │   └── ...
+    └── class3/
+        ├── image1.jpg
+        ├── image2.jpg
+        └── ...
         
 
 Contributing
@@ -76,3 +84,5 @@ License
 -------
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+Ï
