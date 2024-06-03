@@ -1,8 +1,69 @@
-# My Package
+  FAI-Trainer README
 
-This package prepares a dataset and trains a ResNet50 model for image classification.
+FAI-Trainer
+===========
 
-## Installation
+FAI-Trainer is a Python package designed to streamline the process of data preparation and model training for image classification tasks using PyTorch and torchvision. The package includes functionality for converting image formats, resizing images, removing duplicates, splitting datasets into training and validation sets, and training a ResNet50 model.
 
-```bash
-pip install .
+Features
+--------
+
+*   **Data Preparation**: Convert image formats, resize images, remove duplicates, and ensure no corrupted images.
+*   **Dataset Splitting**: Automatically split datasets into training and validation sets with a specified ratio.
+*   **Model Training**: Train a ResNet50 model on the prepared dataset with configurable batch size, number of epochs, and image dimensions.
+*   **Progress Tracking**: Visual progress tracking for both training and validation phases.
+
+Installation
+------------
+
+To install the FAI-Trainer package, use pip:
+
+    pip install .
+
+Usage
+-----
+
+### Data Preparation
+
+To prepare the data with a specified image size:
+
+    train-model --prepare-data --image-size 224 224
+
+### Model Training
+
+To train the model with a specified batch size and number of epochs:
+
+    train-model --train --batch-size 64 --epochs 20 --image-size 224 224
+
+### Full Pipeline
+
+To run both data preparation and model training in sequence:
+
+    train-model --prepare-data --train --batch-size 64 --epochs 20 --image-size 224 224
+
+Directory Structure
+-------------------
+
+Ensure your project directory has the following structure:
+
+    
+    fai_trainer/
+    ├── __init__.py
+    ├── data_preparation.py
+    ├── model_training.py
+    ├── utils.py
+    ├── main.py
+    setup.py
+    requirements.txt
+    README.md
+        
+
+Contributing
+------------
+
+Contributions are welcome! Please open an issue or submit a pull request on GitHub.
+
+License
+-------
+
+This project is licensed under the MIT License - see the LICENSE file for details.
