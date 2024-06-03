@@ -106,11 +106,14 @@ def train_model(
     }
 
     class_names = image_datasets["train"].classes
+    num_classes = len(class_names)  # Number of classes
 
     # Model
     model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, len(class_names))
+    model.fc = nn.Linear(
+        num_ftrs, num_classes
+    )  # Adjust the final layer to match the number of classes
     model = model.to(device)
 
     # Loss function and optimizer
@@ -164,7 +167,9 @@ def train_model(
     plt.legend()
     plt.title("Loss over epochs")
     plt.savefig(os.path.join(results_dir, "loss_plot.png"))
+    plt.close()
 
+    plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 2)
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
@@ -173,8 +178,7 @@ def train_model(
     plt.legend()
     plt.title("Accuracy over epochs")
     plt.savefig(os.path.join(results_dir, "accuracy_plot.png"))
-
-    plt.show()
+    plt.close()
 
     print("Training completed!")
     print(f"Final Training Loss: {train_loss:.4f} Accuracy: {train_acc:.4f}")
@@ -216,7 +220,7 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
     model.eval()
 
     if image_path:
-        image = Image.open(image_path)
+        image = Image.open(image_path).convert("RGB")  # Convert image to RGB
         image_tensor = data_transforms(image).unsqueeze(0).to(device)
         with torch.no_grad():
             outputs = model(image_tensor)
@@ -229,7 +233,7 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
             plt.imshow(image)
             plt.title(f"Predicted: {predicted_class}")
             plt.savefig(result_image_path)
-            plt.show()
+            plt.close()
     else:
         data_dir = "./processed_data/validation"
         test_dataset = datasets.ImageFolder(data_dir, data_transforms)

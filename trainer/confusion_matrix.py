@@ -87,4 +87,4 @@ def plot_confusion_matrix(actual, preds, class_labels):
     plt.savefig("results/torch_confusion_matrix.png", bbox_inches="tight")
 
     # Display the plot
-    plt.show()
+    # plt.show()
