@@ -15,14 +15,15 @@ from .utils import (
 )
 
 
-def prepare_data(main_directory, image_size=(300, 300)):
-    # Backup initial dataset
-    backup_directory = main_directory + "_backup"
-    if not os.path.exists(backup_directory):
-        shutil.copytree(main_directory, backup_directory)
-    print("Backup of the initial dataset created.")
+def prepare_data(
+    main_directory, image_size=(300, 300), processed_directory="processed_data"
+):
+    # Create a copy of the original dataset
+    if not os.path.exists(processed_directory):
+        shutil.copytree(main_directory, processed_directory)
+    print("Processing directory created.")
 
-    subdirectories = find_subdirectories(main_directory)
+    subdirectories = find_subdirectories(processed_directory)
     for subdir in subdirectories:
         print(f"Preparing data in {subdir}")
         convert_png_to_jpg(subdir)
@@ -35,13 +36,13 @@ def prepare_data(main_directory, image_size=(300, 300)):
         remove_duplicates(subdir)
     print("Data preparation completed.")
 
-    equalize_image_counts(main_directory)
+    equalize_image_counts(processed_directory)
     print("Image counts equalized across classes.")
 
     # Split the data into train and validation sets
-    train_path = os.path.join(main_directory, "train")
-    val_path = os.path.join(main_directory, "validation")
-    split_dataset(main_directory, train_path, val_path, val_ratio=0.2)
+    train_path = os.path.join(processed_directory, "train")
+    val_path = os.path.join(processed_directory, "validation")
+    split_dataset(processed_directory, train_path, val_path, val_ratio=0.2)
     print("Data split into training and validation sets.")
 
 
