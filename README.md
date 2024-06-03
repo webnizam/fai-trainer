@@ -26,33 +26,33 @@ Usage
 
 To prepare the data with a specified image size (default dataset directory is `datasets`):
 
-    train-model --prepare-data --image-size 224 224
+    fai-trainer --prepare-data --image-size 224 224
 
 To specify a different dataset directory:
 
-    train-model --prepare-data --dataset-dir path/to/your/dataset --image-size 224 224
+    fai-trainer --prepare-data --dataset-dir path/to/your/dataset --image-size 224 224
 
 ### Model Training
 
 To train the model with a specified batch size and number of epochs:
 
-    train-model --train --batch-size 64 --epochs 20 --image-size 224 224
+    fai-trainer --train --batch-size 64 --epochs 20 --image-size 224 224
 
 ### Full Pipeline
 
 To run both data preparation and model training in sequence:
 
-    train-model --prepare-data --train --batch-size 64 --epochs 20 --image-size 224 224
+    fai-trainer --prepare-data --train --batch-size 64 --epochs 20 --image-size 224 224
 
 ### Model Testing
 
 To test the model on a specific image:
 
-    train-model --test --image-path path/to/your/image.jpg --image-size 224 224
+    fai-trainer --test --image-path path/to/your/image.jpg --image-size 224 224
 
 To test the model on the validation dataset:
 
-    train-model --test --image-size 224 224
+    fai-trainer --test --image-size 224 224
 
 Directory Structure
 -------------------
