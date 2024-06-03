@@ -1,5 +1,6 @@
 import os
 import shutil
+from PIL import Image, ImageOps
 from .utils import (
     convert_png_to_jpg,
     convert_webp_to_jpg,
@@ -13,6 +14,47 @@ from .utils import (
     remove_duplicates,
     equalize_image_counts,
 )
+
+
+def augment_image(image_path):
+    """Create multiple versions of an image with various transformations."""
+    base_image = Image.open(image_path)
+    images = []
+
+    # Original
+    images.append(base_image)
+
+    # Horizontal flip
+    images.append(ImageOps.mirror(base_image))
+
+    # Vertical flip
+    images.append(ImageOps.flip(base_image))
+
+    # Rotations
+    images.append(base_image.rotate(90, expand=True))
+    images.append(base_image.rotate(180, expand=True))
+    images.append(base_image.rotate(270, expand=True))
+
+    return images
+
+
+def save_augmented_images(images, base_path, base_name):
+    """Save augmented images with appropriate names."""
+    for i, img in enumerate(images):
+        img_path = os.path.join(base_path, f"{base_name}_aug_{i}.jpg")
+        img.save(img_path)
+
+
+def augment_images_in_directory(directory):
+    """Augment all images in the specified directory."""
+    for subdir, _, files in os.walk(directory):
+        for file in files:
+            if file.lower().endswith(".jpg"):
+                file_path = os.path.join(subdir, file)
+                base_name = os.path.splitext(file)[0]
+                augmented_images = augment_image(file_path)
+                save_augmented_images(augmented_images, subdir, base_name)
+                os.remove(file_path)  # Remove the original file if not needed
 
 
 def prepare_data(
@@ -34,6 +76,7 @@ def prepare_data(
         suffle_image_names(subdir)
         convert_images_to_rgb(subdir)
         remove_duplicates(subdir)
+        augment_images_in_directory(subdir)  # Augment images in each subdirectory
     print("Data preparation completed.")
 
     equalize_image_counts(processed_directory)

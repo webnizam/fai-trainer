@@ -102,7 +102,6 @@ def verify_jpg_images(directory):
 
 def suffle_image_names(directory):
     """Shuffle the names of image files in the specified directory by adding a random triple-digit number prefix."""
-    import random
 
     def generate_random_number():
         return str(random.randint(100000, 200000))
@@ -137,9 +136,6 @@ def convert_images_to_rgb(directory):
 
 def display_random_images_from_subdirectories(root_dir):
     """Display a random sample of images from subdirectories."""
-    import random
-    import matplotlib.pyplot as plt
-
     subdirs = [
         os.path.join(root_dir, d)
         for d in os.listdir(root_dir)

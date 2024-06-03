@@ -49,6 +49,7 @@ def main():
             batch_size=args.batch_size,
             epochs=args.epochs,
             image_size=tuple(args.image_size),
+            dataset_dir="./processed_data",
             results_dir=args.results_dir,
         )
 

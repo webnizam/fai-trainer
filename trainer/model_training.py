@@ -6,7 +6,9 @@ from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from torchvision.models import resnet50, ResNet50_Weights
 from PIL import Image
+from .confusion_matrix import get_predictions, plot_confusion_matrix
 
 
 def train_one_epoch(train_loader, model, criterion, optimizer, device):
@@ -58,12 +60,23 @@ def validate_one_epoch(val_loader, model, criterion, device):
     return epoch_loss, epoch_acc
 
 
-def train_model(batch_size=32, epochs=10, image_size=(224, 224), results_dir="results"):
+def train_model(
+    batch_size=32,
+    epochs=10,
+    image_size=(224, 224),
+    dataset_dir="datasets",
+    results_dir="results",
+):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    # Ensure results directory exists
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Data transformations
     data_transforms = {
         "train": transforms.Compose(
             [
+                transforms.Resize(image_size),
                 transforms.RandomResizedCrop(image_size),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
@@ -80,9 +93,9 @@ def train_model(batch_size=32, epochs=10, image_size=(224, 224), results_dir="re
         ),
     }
 
-    data_dir = "./processed_data"
+    # Load datasets
     image_datasets = {
-        x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x])
+        x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transforms[x])
         for x in ["train", "validation"]
     }
     dataloaders = {
@@ -91,24 +104,26 @@ def train_model(batch_size=32, epochs=10, image_size=(224, 224), results_dir="re
         )
         for x in ["train", "validation"]
     }
-    dataset_sizes = {x: len(image_datasets[x]) for x in ["train", "validation"]}
-    print(dataset_sizes)
+
     class_names = image_datasets["train"].classes
 
-    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+    # Model
+    model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, len(class_names))
     model = model.to(device)
 
+    # Loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
+    # Training loop
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
 
     for epoch in range(epochs):
-        print(f"Epoch {epoch+1}/{epochs}")
+        print(f"Epoch {epoch + 1}/{epochs}")
         print("-" * 10)
 
         train_loss, train_acc = train_one_epoch(
@@ -125,31 +140,54 @@ def train_model(batch_size=32, epochs=10, image_size=(224, 224), results_dir="re
 
         print(f"Train Loss: {train_loss:.4f} Acc: {train_acc:.4f}")
         print(f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
+        print()
 
-        scheduler.step()
+        if epoch == 0 or epoch == epochs - 1:
+            save_model_diagrams(
+                results_dir,
+                epoch,
+                model,
+                val_loader=dataloaders["validation"],
+                device=device,
+            )
 
-    os.makedirs(results_dir, exist_ok=True)
     torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
-    print("Training complete.")
+    torch.save(model, os.path.join(results_dir, "model-full.pth"))
 
-    # Plot the training and validation loss
+    # Plot and save loss and accuracy graphs
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
     plt.plot(train_losses, label="Train Loss")
     plt.plot(val_losses, label="Validation Loss")
-    plt.title("Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
     plt.legend()
-    plt.savefig(os.path.join(results_dir, "loss.png"))
+    plt.title("Loss over epochs")
+    plt.savefig(os.path.join(results_dir, "loss_plot.png"))
 
-    # Plot the training and validation accuracy
     plt.subplot(1, 2, 2)
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
-    plt.title("Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
     plt.legend()
-    plt.savefig(os.path.join(results_dir, "accuracy.png"))
+    plt.title("Accuracy over epochs")
+    plt.savefig(os.path.join(results_dir, "accuracy_plot.png"))
 
     plt.show()
+
+    print("Training completed!")
+    print(f"Final Training Loss: {train_loss:.4f} Accuracy: {train_acc:.4f}")
+    print(f"Final Validation Loss: {val_loss:.4f} Accuracy: {val_acc:.4f}")
+
+
+def save_model_diagrams(results_dir, epoch, model, val_loader, device):
+    # Save confusion matrix and other diagrams if needed
+    actual_labels, predicted_labels = get_predictions(model, val_loader, device)
+    plot_confusion_matrix(actual_labels, predicted_labels, val_loader.dataset.classes)
+
+    plt.savefig(os.path.join(results_dir, f"confusion_matrix_epoch_{epoch + 1}.png"))
+    plt.close()
 
 
 def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
@@ -170,7 +208,7 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
 
     class_names = datasets.ImageFolder("./processed_data/train").classes
 
-    model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
+    model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, len(class_names))
     model.load_state_dict(torch.load(os.path.join(results_dir, "model.pth")))
@@ -198,6 +236,12 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
         test_loader = DataLoader(
             test_dataset, batch_size=32, shuffle=False, num_workers=4
         )
+
+        actual_labels, predicted_labels = get_predictions(model, test_loader, device)
+        plot_confusion_matrix(actual_labels, predicted_labels, class_names)
+
+        plt.savefig(os.path.join(results_dir, "confusion_matrix.png"))
+        plt.close()
 
         correct = 0
         total = 0
