@@ -17,7 +17,7 @@ Installation
 
 To install the FAI-Trainer package, use pip:
 
-    pip install .
+    pip install fai-trainer
 
 Usage
 -----

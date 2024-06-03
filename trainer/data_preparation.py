@@ -58,7 +58,7 @@ def augment_images_in_directory(directory):
 
 
 def prepare_data(
-    main_directory, image_size=(300, 300), processed_directory="processed_data"
+    main_directory, image_size=(224, 224), processed_directory="processed_data"
 ):
     # Create a copy of the original dataset
     if not os.path.exists(processed_directory):
