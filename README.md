@@ -1,5 +1,3 @@
-  FAI-Trainer README
-
 FAI-Trainer
 ===========
 
@@ -12,6 +10,7 @@ Features
 *   **Dataset Splitting**: Automatically split datasets into training and validation sets with a specified ratio.
 *   **Model Training**: Train a ResNet50 model on the prepared dataset with configurable batch size, number of epochs, and image dimensions.
 *   **Progress Tracking**: Visual progress tracking for both training and validation phases.
+*   **Model Testing**: Load a trained model to test on a specific image or the validation dataset, and save the results.
 
 Installation
 ------------
@@ -40,6 +39,16 @@ To train the model with a specified batch size and number of epochs:
 To run both data preparation and model training in sequence:
 
     train-model --prepare-data --train --batch-size 64 --epochs 20 --image-size 224 224
+
+### Model Testing
+
+To test the model on a specific image:
+
+    train-model --test --image-path path/to/your/image.jpg --image-size 224 224
+
+To test the model on the validation dataset:
+
+    train-model --test --image-size 224 224
 
 Directory Structure
 -------------------
