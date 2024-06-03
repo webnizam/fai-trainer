@@ -224,9 +224,13 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
         image_tensor = data_transforms(image).unsqueeze(0).to(device)
         with torch.no_grad():
             outputs = model(image_tensor)
+            probabilities = nn.functional.softmax(outputs, dim=1).squeeze()
             _, predicted = torch.max(outputs, 1)
             predicted_class = class_names[predicted.item()]
             print(f"Predicted class: {predicted_class}")
+            print("Class probabilities:")
+            for i, prob in enumerate(probabilities):
+                print(f"{class_names[i]}: {prob * 100:.2f}%")
 
             # Save the result image with prediction
             result_image_path = os.path.join(results_dir, "result_image.png")
