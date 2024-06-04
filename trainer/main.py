@@ -1,6 +1,7 @@
 import argparse
 from .data_preparation import prepare_data
 from .model_training import train_model, test_model
+import shutil
 
 
 def main():
@@ -18,6 +19,13 @@ def main():
         action="store_true",
         help="Train the model with the specified parameters.",
     )
+
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Clean run.",
+    )
+
     parser.add_argument("--test", action="store_true", help="Test the trained model.")
     parser.add_argument(
         "--image-path", type=str, help="Path to an image for testing the model."
@@ -63,6 +71,11 @@ def main():
             image_size=tuple(args.image_size),
             processed_directory="./processed_data",
         )
+
+    if args.clean:
+        print("Cleaning up.")
+        shutil.rmtree("./processed_data")
+        shutil.rmtree("./results")
 
     if args.train:
         print(f"Training model with dataset from: ./processed_data")
