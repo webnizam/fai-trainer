@@ -1,7 +1,11 @@
+Here is the updated text with the authors and their GitHub links:
+
 FAI-Trainer
-===========
+-----------
 
 FAI-Trainer is a Python package designed to streamline the process of data preparation and model training for image classification tasks using PyTorch and torchvision. The package includes functionality for converting image formats, resizing images, removing duplicates, splitting datasets into training and validation sets, and training a ResNet50 model.
+
+**Authors:** Nizamuddin Mohamed (@webnizam) [GitHub: webnizam](https://github.com/webnizam) | Michael Stattelman (@mstatt) [GitHub: mstatt](https://github.com/mstatt)
 
 Features
 --------
@@ -59,7 +63,6 @@ Directory Structure
 
 Ensure your dataset directory has the following structure:
 
-    
     datasets/
     ├── class1/
     │   ├── image1.jpg
@@ -73,9 +76,10 @@ Ensure your dataset directory has the following structure:
         ├── image1.jpg
         ├── image2.jpg
         └── ...
-        
 
 Contributing
 ------------
 
 Contributions are welcome! Please open an issue or submit a pull request on GitHub.
+
+©️2024 Falcons.AI | Vition.AI

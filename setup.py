@@ -6,9 +6,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="fai-trainer",
-    version="0.1.4",
-    author="Falcons.AI",
-    author_email="info@falcons.ai",
+    version="0.1.5",
+    author="Nizamuddin Mohamed & Michael Statelman",
+    author_email="webnizam@gmail.com",
     description="A package for training and testing image classification models using PyTorch.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -37,7 +37,7 @@ setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     include_package_data=True,
     zip_safe=False,
 )
