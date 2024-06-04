@@ -1,5 +1,3 @@
-Here is the updated text with the authors and their GitHub links:
-
 FAI-Trainer
 -----------
 
@@ -26,37 +24,21 @@ To install the FAI-Trainer package, use pip:
 Usage
 -----
 
-### Data Preparation
-
-To prepare the data with a specified image size (default dataset directory is `datasets`):
-
-    fai-trainer --prepare-data --image-size 224 224
-
-To specify a different dataset directory:
-
-    fai-trainer --prepare-data --dataset-dir path/to/your/dataset --image-size 224 224
-
-### Model Training
-
-To train the model with a specified batch size and number of epochs:
-
-    fai-trainer --train --batch-size 64 --epochs 20 --image-size 224 224
-
-### Full Pipeline
+### Run Data Preparation and Model Training
 
 To run both data preparation and model training in sequence:
 
-    fai-trainer --prepare-data --train --batch-size 64 --epochs 20 --image-size 224 224
+    fai-trainer --prepare-data --train --batch-size 32 --epochs 3 --image-size 96 96
 
 ### Model Testing
 
 To test the model on a specific image:
 
-    fai-trainer --test --image-path path/to/your/image.jpg --image-size 224 224
+    fai-trainer --test --image-path path/to/your/image.jpg --image-size 96 96
 
 To test the model on the validation dataset:
 
-    fai-trainer --test --image-size 224 224
+    fai-trainer --test --image-size 96 96
 
 Directory Structure
 -------------------
