@@ -193,6 +193,18 @@ def split_dataset(base_dir, train_dir, val_dir, val_ratio=0.2):
             f"Class {cls}: {len(train_files)} training files, {len(val_files)} validation files"
         )
 
+    # Remove empty class directories
+    for cls in classes:
+        class_dir = os.path.join(base_dir, cls)
+        if not os.listdir(class_dir):
+            os.rmdir(class_dir)
+
+    for split_dir in [train_dir, val_dir]:
+        for cls in os.listdir(split_dir):
+            class_dir = os.path.join(split_dir, cls)
+            if os.path.isdir(class_dir) and not os.listdir(class_dir):
+                os.rmdir(class_dir)
+
 
 def remove_duplicates(directory):
     unique_images = {}
