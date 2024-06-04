@@ -2,6 +2,7 @@ import argparse
 from .data_preparation import prepare_data
 from .model_training import train_model, test_model
 import shutil
+import time
 
 
 def main():
@@ -9,6 +10,13 @@ def main():
         description="Prepare data and train the model.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
+
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Clean run.",
+    )
+
     parser.add_argument(
         "--prepare-data",
         action="store_true",
@@ -18,12 +26,6 @@ def main():
         "--train",
         action="store_true",
         help="Train the model with the specified parameters.",
-    )
-
-    parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="Clean run.",
     )
 
     parser.add_argument("--test", action="store_true", help="Test the trained model.")
@@ -74,8 +76,26 @@ def main():
 
     if args.clean:
         print("Cleaning up.")
-        shutil.rmtree("./processed_data")
-        shutil.rmtree("./results")
+        # Clean directories
+        try:
+            shutil.rmtree("./processed_data")
+        except FileNotFoundError:
+            pass  # Ignore if directory doesn't exist
+        try:
+            shutil.rmtree("./results")
+        except FileNotFoundError:
+            pass  # Ignore if directory doesn't exist
+
+        while True:
+            try:
+                shutil.rmtree("./processed_data")
+                shutil.rmtree("./results")
+            except FileNotFoundError:
+                print("Cleaning finished.")
+                break
+            else:
+                print("Waiting for cleaning to finish...")
+                time.sleep(1)  #
 
     if args.train:
         print(f"Training model with dataset from: ./processed_data")
