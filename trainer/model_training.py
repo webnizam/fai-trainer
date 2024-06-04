@@ -8,6 +8,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from torchvision.models import resnet50, ResNet50_Weights
 from PIL import Image
+from prettytable import PrettyTable
 from .confusion_matrix import get_predictions, plot_confusion_matrix
 
 
@@ -58,6 +59,26 @@ def validate_one_epoch(val_loader, model, criterion, device):
     epoch_loss = running_loss / total
     epoch_acc = correct / total
     return epoch_loss, epoch_acc
+
+
+def print_summary_table(
+    epochs, train_losses, val_losses, train_accuracies, val_accuracies
+):
+    table = PrettyTable()
+    table.field_names = ["Epoch", "Train Loss", "Val Loss", "Train Acc", "Val Acc"]
+
+    for i in range(epochs):
+        table.add_row(
+            [
+                i + 1,
+                f"{train_losses[i]:.4f}",
+                f"{val_losses[i]:.4f}",
+                f"{train_accuracies[i] * 100:.2f}%",
+                f"{val_accuracies[i] * 100:.2f}%",
+            ]
+        )
+
+    print(table)
 
 
 def train_model(
@@ -181,8 +202,9 @@ def train_model(
     plt.close()
 
     print("Training completed!")
-    print(f"Final Training Loss: {train_loss:.4f} Accuracy: {train_acc:.4f}")
-    print(f"Final Validation Loss: {val_loss:.4f} Accuracy: {val_acc:.4f}")
+    print_summary_table(
+        epochs, train_losses, val_losses, train_accuracies, val_accuracies
+    )
 
 
 def save_model_diagrams(results_dir, epoch, model, val_loader, device):
@@ -227,10 +249,23 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
             probabilities = nn.functional.softmax(outputs, dim=1).squeeze()
             _, predicted = torch.max(outputs, 1)
             predicted_class = class_names[predicted.item()]
-            print(f"Predicted class: {predicted_class}")
+            print(f"\nPredicted class: {predicted_class}\n")
+
+            # Sort class probabilities
+            sorted_probs = sorted(
+                zip(class_names, probabilities.tolist()),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            # Use PrettyTable to display class probabilities
+            table = PrettyTable()
+            table.field_names = ["Class", "Probability"]
+            for class_name, prob in sorted_probs:
+                table.add_row([class_name, f"{prob * 100:.2f}%"])
+
             print("Class probabilities:")
-            for i, prob in enumerate(probabilities):
-                print(f"{class_names[i]}: {prob * 100:.2f}%")
+            print(table)
 
             # Save the result image with prediction
             result_image_path = os.path.join(results_dir, "result_image.png")
