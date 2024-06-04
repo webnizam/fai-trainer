@@ -1,12 +1,11 @@
 from setuptools import setup, find_packages
-import os
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
     name="fai-trainer",
-    version="0.2.9",
+    version="0.3.0",
     author="Nizamuddin Mohamed & Michael Statelman",
     author_email="webnizam@gmail.com",
     description="A package for training and testing image classification models using PyTorch.",

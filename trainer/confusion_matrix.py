@@ -4,6 +4,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import warnings
+import os
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -13,7 +14,8 @@ def get_predictions(model, data_loader, device):
     all_preds = []
     all_labels = []
     with torch.no_grad():
-        for inputs, labels in tqdm(data_loader):
+        for data in tqdm(data_loader):
+            inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             _, preds = torch.max(outputs, 1)
@@ -23,10 +25,11 @@ def get_predictions(model, data_loader, device):
 
 
 def calculate_scores(cm):
-    return [cm[i, i] / np.sum(cm[i]) for i in range(len(cm))]
+    correct_scores = [cm[i, i] / np.sum(cm[i]) for i in range(len(cm))]
+    return correct_scores
 
 
-def plot_confusion_matrix(actual, preds, class_labels):
+def plot_confusion_matrix(actual, preds, class_labels, results_dir):
     cm = confusion_matrix(actual, preds)
     num_classes = len(class_labels)
     scores = calculate_scores(cm)
@@ -47,8 +50,12 @@ def plot_confusion_matrix(actual, preds, class_labels):
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
 
-    accuracy = np.trace(cm) / np.sum(cm)
-    plt.title(f"Confusion Matrix\n{accuracy * 100:.2f}% accuracy.")
+    def calculate_accuracy(cm):
+        return np.trace(cm) / np.sum(cm)
+
+    accuracy = calculate_accuracy(cm)
+    str_title = f"Confusion Matrix\n{accuracy * 100:.2f}% accuracy."
+    plt.title(str_title)
 
     legend_handles = [
         plt.Line2D(
@@ -65,5 +72,6 @@ def plot_confusion_matrix(actual, preds, class_labels):
     )
     plt.setp(legend.get_texts(), color="black")
 
-    plt.savefig("results/torch_confusion_matrix.png", bbox_inches="tight")
+    os.makedirs(results_dir, exist_ok=True)
+    plt.savefig(f"{results_dir}/confusion_matrix.png", bbox_inches="tight")
     plt.close()

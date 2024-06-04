@@ -184,6 +184,11 @@ def train_model(
         epochs, train_losses, val_losses, train_accuracies, val_accuracies
     )
 
+    actual_labels, predicted_labels = get_predictions(
+        model, dataloaders["validation"], device
+    )
+    plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+
 
 def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
     if not os.path.exists(os.path.join(results_dir, "model.pth")):
@@ -247,10 +252,7 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
         )
 
         actual_labels, predicted_labels = get_predictions(model, test_loader, device)
-        plot_confusion_matrix(actual_labels, predicted_labels, class_names)
-
-        plt.savefig(os.path.join(results_dir, "confusion_matrix.png"))
-        plt.close()
+        plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
 
         correct = 0
         total = 0
