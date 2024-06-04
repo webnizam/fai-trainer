@@ -15,6 +15,10 @@ from .utils import (
     equalize_image_counts,
 )
 
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def augment_image(image_path):
     """Create multiple versions of an image with various transformations."""

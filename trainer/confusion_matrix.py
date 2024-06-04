@@ -3,6 +3,9 @@ import torch
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def get_predictions(model, data_loader, device):

@@ -10,6 +10,9 @@ from torchvision.models import resnet50, ResNet50_Weights
 from PIL import Image
 from prettytable import PrettyTable
 from .confusion_matrix import get_predictions, plot_confusion_matrix
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def train_one_epoch(train_loader, model, criterion, optimizer, device):
