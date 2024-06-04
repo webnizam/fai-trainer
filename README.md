@@ -24,7 +24,7 @@ To install the FAI-Trainer package, use pip:
 Usage
 -----
 
-### Run Data Preparation and Model Training
+### Data Preparation and Model Training
 
 To run both data preparation and model training in sequence:
 
@@ -35,10 +35,6 @@ To run both data preparation and model training in sequence:
 To test the model on a specific image:
 
     fai-trainer --test --image-path path/to/your/image.jpg --image-size 96 96
-
-To test the model on the validation dataset:
-
-    fai-trainer --test --image-size 96 96
 
 Directory Structure
 -------------------
