@@ -5,6 +5,29 @@ import shutil
 import time
 
 
+def clean_directories():
+    print("Cleaning up.")
+    try:
+        shutil.rmtree("./processed_data")
+    except FileNotFoundError:
+        pass
+    try:
+        shutil.rmtree("./results")
+    except FileNotFoundError:
+        pass
+
+    while True:
+        try:
+            shutil.rmtree("./processed_data")
+            shutil.rmtree("./results")
+        except FileNotFoundError:
+            print("Cleaning finished.")
+            break
+        else:
+            print("Waiting for cleaning to finish...")
+            time.sleep(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Prepare data and train the model.",
@@ -66,6 +89,9 @@ def main():
 
     args = parser.parse_args()
 
+    if args.clean:
+        clean_directories()
+
     if args.prepare_data:
         print(f"Preparing data in directory: {args.dataset_dir}")
         prepare_data(
@@ -73,29 +99,6 @@ def main():
             image_size=tuple(args.image_size),
             processed_directory="./processed_data",
         )
-
-    if args.clean:
-        print("Cleaning up.")
-        # Clean directories
-        try:
-            shutil.rmtree("./processed_data")
-        except FileNotFoundError:
-            pass  # Ignore if directory doesn't exist
-        try:
-            shutil.rmtree("./results")
-        except FileNotFoundError:
-            pass  # Ignore if directory doesn't exist
-
-        while True:
-            try:
-                shutil.rmtree("./processed_data")
-                shutil.rmtree("./results")
-            except FileNotFoundError:
-                print("Cleaning finished.")
-                break
-            else:
-                print("Waiting for cleaning to finish...")
-                time.sleep(1)  #
 
     if args.train:
         print(f"Training model with dataset from: ./processed_data")
