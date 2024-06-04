@@ -25,7 +25,6 @@ def train_one_epoch(train_loader, model, criterion, optimizer, device):
         inputs, labels = inputs.to(device), labels.to(device)
 
         optimizer.zero_grad()
-
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
@@ -36,9 +35,7 @@ def train_one_epoch(train_loader, model, criterion, optimizer, device):
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-    epoch_loss = running_loss / total
-    epoch_acc = correct / total
-    return epoch_loss, epoch_acc
+    return running_loss / total, correct / total
 
 
 def validate_one_epoch(val_loader, model, criterion, device):
@@ -50,7 +47,6 @@ def validate_one_epoch(val_loader, model, criterion, device):
     with torch.no_grad():
         for inputs, labels in tqdm(val_loader, desc="Validation", leave=False):
             inputs, labels = inputs.to(device), labels.to(device)
-
             outputs = model(inputs)
             loss = criterion(outputs, labels)
 
@@ -59,9 +55,7 @@ def validate_one_epoch(val_loader, model, criterion, device):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    epoch_loss = running_loss / total
-    epoch_acc = correct / total
-    return epoch_loss, epoch_acc
+    return running_loss / total, correct / total
 
 
 def print_summary_table(
@@ -90,13 +84,11 @@ def train_model(
     image_size=(224, 224),
     dataset_dir="datasets",
     results_dir="results",
+    learning_rate=0.001,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Ensure results directory exists
     os.makedirs(results_dir, exist_ok=True)
 
-    # Data transformations
     data_transforms = {
         "train": transforms.Compose(
             [
@@ -117,7 +109,6 @@ def train_model(
         ),
     }
 
-    # Load datasets
     image_datasets = {
         x: datasets.ImageFolder(os.path.join(dataset_dir, x), data_transforms[x])
         for x in ["train", "validation"]
@@ -130,22 +121,17 @@ def train_model(
     }
 
     class_names = image_datasets["train"].classes
-    num_classes = len(class_names)  # Number of classes
+    num_classes = len(class_names)
 
-    # Model
     model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(
-        num_ftrs, num_classes
-    )  # Adjust the final layer to match the number of classes
+    model.fc = nn.Linear(num_ftrs, num_classes)
     model = model.to(device)
 
-    # Loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.fc.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
-    # Training loop
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
 
@@ -169,19 +155,9 @@ def train_model(
         print(f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
         print()
 
-        if epoch == 0 or epoch == epochs - 1:
-            save_model_diagrams(
-                results_dir,
-                epoch,
-                model,
-                val_loader=dataloaders["validation"],
-                device=device,
-            )
-
     torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
     torch.save(model, os.path.join(results_dir, "model-full.pth"))
 
-    # Plot and save loss and accuracy graphs
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
     plt.plot(train_losses, label="Train Loss")
@@ -190,10 +166,7 @@ def train_model(
     plt.ylabel("Loss")
     plt.legend()
     plt.title("Loss over epochs")
-    plt.savefig(os.path.join(results_dir, "loss_plot.png"))
-    plt.close()
 
-    plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 2)
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
@@ -201,22 +174,15 @@ def train_model(
     plt.ylabel("Accuracy")
     plt.legend()
     plt.title("Accuracy over epochs")
-    plt.savefig(os.path.join(results_dir, "accuracy_plot.png"))
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "loss_accuracy_plot.png"))
     plt.close()
 
     print("Training completed!")
     print_summary_table(
         epochs, train_losses, val_losses, train_accuracies, val_accuracies
     )
-
-
-def save_model_diagrams(results_dir, epoch, model, val_loader, device):
-    # Save confusion matrix and other diagrams if needed
-    actual_labels, predicted_labels = get_predictions(model, val_loader, device)
-    plot_confusion_matrix(actual_labels, predicted_labels, val_loader.dataset.classes)
-
-    plt.savefig(os.path.join(results_dir, f"confusion_matrix_epoch_{epoch + 1}.png"))
-    plt.close()
 
 
 def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
@@ -245,7 +211,7 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
     model.eval()
 
     if image_path:
-        image = Image.open(image_path).convert("RGB")  # Convert image to RGB
+        image = Image.open(image_path).convert("RGB")
         image_tensor = data_transforms(image).unsqueeze(0).to(device)
         with torch.no_grad():
             outputs = model(image_tensor)
@@ -254,14 +220,12 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
             predicted_class = class_names[predicted.item()]
             print(f"\nPredicted class: {predicted_class}\n")
 
-            # Sort class probabilities
             sorted_probs = sorted(
                 zip(class_names, probabilities.tolist()),
                 key=lambda x: x[1],
                 reverse=True,
             )
 
-            # Use PrettyTable to display class probabilities
             table = PrettyTable()
             table.field_names = ["Class", "Probability"]
             for class_name, prob in sorted_probs:
@@ -270,7 +234,6 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
             print("Class probabilities:")
             print(table)
 
-            # Save the result image with prediction
             result_image_path = os.path.join(results_dir, "result_image.png")
             plt.imshow(image)
             plt.title(f"Predicted: {predicted_class}")

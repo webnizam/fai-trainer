@@ -10,19 +10,16 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 def clean_directories():
     print("Cleaning up.")
-    try:
-        shutil.rmtree("./processed_data")
-    except FileNotFoundError:
-        pass
-    try:
-        shutil.rmtree("./results")
-    except FileNotFoundError:
-        pass
+    for directory in ["./processed_data", "./results"]:
+        try:
+            shutil.rmtree(directory)
+        except FileNotFoundError:
+            pass
 
     while True:
         try:
-            shutil.rmtree("./processed_data")
-            shutil.rmtree("./results")
+            for directory in ["./processed_data", "./results"]:
+                shutil.rmtree(directory)
         except FileNotFoundError:
             print("Cleaning finished.")
             break
@@ -37,12 +34,7 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
-    parser.add_argument(
-        "--clean",
-        action="store_true",
-        help="Clean run.",
-    )
-
+    parser.add_argument("--clean", action="store_true", help="Clean run.")
     parser.add_argument(
         "--prepare-data",
         action="store_true",
@@ -53,7 +45,6 @@ def main():
         action="store_true",
         help="Train the model with the specified parameters.",
     )
-
     parser.add_argument("--test", action="store_true", help="Test the trained model.")
     parser.add_argument(
         "--image-path", type=str, help="Path to an image for testing the model."
@@ -89,6 +80,12 @@ def main():
         default="results",
         help="Directory to save results and diagrams (default: 'results').",
     )
+    parser.add_argument(
+        "--learning-rate",
+        type=float,
+        default=0.001,
+        help="Learning rate for training (default: 0.001).",
+    )
 
     args = parser.parse_args()
 
@@ -111,6 +108,7 @@ def main():
             image_size=tuple(args.image_size),
             dataset_dir="./processed_data",
             results_dir=args.results_dir,
+            learning_rate=args.learning_rate,
         )
 
     if args.test:
