@@ -3,6 +3,9 @@ from .data_preparation import prepare_data
 from .model_training import train_model, test_model
 import shutil
 import time
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 def clean_directories():
