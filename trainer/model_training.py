@@ -276,7 +276,9 @@ def train_model(
     actual_labels, predicted_labels = get_predictions(
         model, dataloaders["validation"], device
     )
-    plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+    confusion_matrix_path = plot_confusion_matrix(
+        actual_labels, predicted_labels, class_names, results_dir
+    )
 
     # Generate pie charts for image distributions
     train_labels, train_counts = count_images_in_subdirs(
@@ -305,6 +307,7 @@ def train_model(
     pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=190)
     pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=190)
     pdf.add_image(val_pie_chart_path, "Validation Image Distribution", w=190)
+    pdf.add_image(confusion_matrix_path, "Confusion Matrix", w=190)
     pdf.output(os.path.join(results_dir, "training_report.pdf"))
 
     print("PDF report generated successfully!")
@@ -381,7 +384,9 @@ def test_model(
         )
 
         actual_labels, predicted_labels = get_predictions(model, test_loader, device)
-        plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+        confusion_matrix_path = plot_confusion_matrix(
+            actual_labels, predicted_labels, class_names, results_dir
+        )
 
         correct = 0
         total = 0
