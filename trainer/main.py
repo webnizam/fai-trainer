@@ -108,7 +108,7 @@ def main():
         )
 
     if args.train:
-        print(f"Training model with dataset from: ./processed_data")
+        print("Training model with dataset from: ./processed_data")
         train_model(
             batch_size=args.batch_size,
             epochs=args.epochs,
