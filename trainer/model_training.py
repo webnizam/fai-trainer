@@ -108,7 +108,7 @@ def generate_pie_chart(labels, counts, results_dir, locf="Train"):
     # Combine labels and counts for legend
     legend_labels = [f"{label} ({count})" for label, count in zip(labels, counts)]
 
-    fig, ax = plt.subplots(figsize=(12.8, 9.6))  # Make the chart 2x larger
+    fig, ax = plt.subplots(figsize=(10, 7.5))  # Adjust the figure size
     ax.pie(
         counts,
         labels=labels,
@@ -145,7 +145,10 @@ class PDFReport(FPDF):
         self.add_page()
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, title, 0, 1, "C")
-        self.image(image_path, x, y, w, h)
+        if w == 0:
+            self.image(image_path, x, y, w, h)
+        else:
+            self.image(image_path, x, y, w, h, type="png")
         self.ln(10)
 
     def add_table(self, table, title):
@@ -153,9 +156,16 @@ class PDFReport(FPDF):
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, title, 0, 1, "L")
         self.set_font("Arial", "", 12)
-        table_str = table.get_string()
-        self.multi_cell(0, 10, table_str)
-        self.ln(10)
+        # Add the table rows to the PDF
+        col_width = self.epw / len(table.field_names)
+        th = self.font_size
+        for header in table.field_names:
+            self.cell(col_width, th, str(header), border=1)
+        self.ln(th)
+        for row in table:
+            for datum in row:
+                self.cell(col_width, th, str(datum), border=1)
+            self.ln(th)
 
 
 def train_model(
@@ -250,7 +260,7 @@ def train_model(
     plt.savefig(loss_plot_path)
     plt.close()
 
-    plt.subplot(1, 2, 2)
+    plt.figure(figsize=(10, 5))
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
     plt.xlabel("Epoch")
@@ -294,10 +304,10 @@ def train_model(
         f"Epochs: {epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}"
     )
     pdf.add_table(summary_table, "Training Summary Table")
-    pdf.add_image(loss_plot_path, "Loss over Epochs", w=150)
-    pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=150)
-    pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=150)
-    pdf.add_image(val_pie_chart_path, "Validation Image Distribution", w=150)
+    pdf.add_image(loss_plot_path, "Loss over Epochs", w=190)
+    pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=190)
+    pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=190)
+    pdf.add_image(val_pie_chart_path, "Validation Image Distribution", w=190)
     pdf.output(os.path.join(results_dir, "training_report.pdf"))
 
     print("PDF report generated successfully!")
