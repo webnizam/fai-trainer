@@ -25,7 +25,7 @@ def augment_image(image_path):
         base_image,
         ImageOps.mirror(base_image),
         ImageOps.flip(base_image),
-        # ImageOps.grayscale(base_image),
+        ImageOps.grayscale(base_image),
     ]
     images.extend([base_image.rotate(angle, expand=True) for angle in [90, 180, 270]])
     return images

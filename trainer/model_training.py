@@ -190,8 +190,12 @@ def train_model(
     plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
 
 
-def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
-    if not os.path.exists(os.path.join(results_dir, "model.pth")):
+def test_model(
+    image_path=None, image_size=(224, 224), results_dir="results", load_full_model=False
+):
+    model_file = "model-full.pth" if load_full_model else "model.pth"
+
+    if not os.path.exists(os.path.join(results_dir, model_file)):
         print("Model not found. Train the model first.")
         return
 
@@ -208,10 +212,15 @@ def test_model(image_path=None, image_size=(224, 224), results_dir="results"):
 
     class_names = datasets.ImageFolder("./processed_data/train").classes
 
-    model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, len(class_names))
-    model.load_state_dict(torch.load(os.path.join(results_dir, "model.pth")))
+    if load_full_model:
+        model = torch.load(os.path.join(results_dir, model_file), map_location=device)
+    else:
+        model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, len(class_names))
+        model.load_state_dict(
+            torch.load(os.path.join(results_dir, model_file), map_location=device)
+        )
     model = model.to(device)
     model.eval()
 
