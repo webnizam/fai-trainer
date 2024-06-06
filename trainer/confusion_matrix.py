@@ -75,3 +75,5 @@ def plot_confusion_matrix(actual, preds, class_labels, results_dir):
     os.makedirs(results_dir, exist_ok=True)
     plt.savefig(f"{results_dir}/confusion_matrix.png", bbox_inches="tight")
     plt.close()
+
+    return f"{results_dir}/confusion_matrix.png"

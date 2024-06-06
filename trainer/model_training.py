@@ -61,9 +61,7 @@ def validate_one_epoch(val_loader, model, criterion, device):
     return running_loss / total, correct / total
 
 
-def print_summary_table(
-    epochs, train_losses, val_losses, train_accuracies, val_accuracies
-):
+def print_summary_table(epochs, train_losses, val_losses, train_accuracies, val_accuracies):
     table = PrettyTable()
     table.field_names = ["Epoch", "Train Loss", "Val Loss", "Train Acc", "Val Acc"]
 
@@ -148,21 +146,6 @@ class PDFReport(FPDF):
         self.cell(0, 10, title, 0, 1, "C")
         self.image(image_path, x, y, w, h)
         self.ln(10)
-
-    def add_table(self, table, title):
-        self.add_page()
-        self.set_font("Arial", "B", 12)
-        self.cell(0, 10, title, 0, 1, "L")
-        self.set_font("Arial", "", 12)
-        col_width = self.w / len(table.field_names)
-        th = self.font_size
-        for header in table.field_names:
-            self.cell(col_width, th, str(header), border=1)
-        self.ln(th)
-        for row in table:
-            for datum in row:
-                self.cell(col_width, th, str(datum), border=1)
-            self.ln(th)
 
 
 def train_model(
@@ -276,9 +259,7 @@ def train_model(
     actual_labels, predicted_labels = get_predictions(
         model, dataloaders["validation"], device
     )
-    confusion_matrix_path = plot_confusion_matrix(
-        actual_labels, predicted_labels, class_names, results_dir
-    )
+    confusion_matrix_path = plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
 
     # Generate pie charts for image distributions
     train_labels, train_counts = count_images_in_subdirs(
@@ -302,7 +283,6 @@ def train_model(
     pdf.chapter_body(
         f"Epochs: {epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}"
     )
-    pdf.add_table(summary_table, "Training Summary Table")
     pdf.add_image(loss_plot_path, "Loss over Epochs", w=190)
     pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=190)
     pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=190)
@@ -384,9 +364,7 @@ def test_model(
         )
 
         actual_labels, predicted_labels = get_predictions(model, test_loader, device)
-        confusion_matrix_path = plot_confusion_matrix(
-            actual_labels, predicted_labels, class_names, results_dir
-        )
+        confusion_matrix_path = plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
 
         correct = 0
         total = 0
