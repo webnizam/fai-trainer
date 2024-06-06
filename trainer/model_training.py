@@ -99,7 +99,7 @@ def count_images_in_subdirs(main_dir):
     return labels, counts
 
 
-def generate_pie_chart(labels, counts, locf="Train"):
+def generate_pie_chart(labels, counts, results_dir, locf="Train"):
     print("Generating chart for:" + locf)
     myexplode = [0.1] * len(
         labels
@@ -120,7 +120,7 @@ def generate_pie_chart(labels, counts, locf="Train"):
     )
     plt.legend(legend_labels, loc="upper right", title=locf + " Image Count")
     plt.title(f"{locf} - Image Distribution")
-    new_filepath = f"runs/torch_{locf}_dataset_pie.png"
+    new_filepath = f"{results_dir}/torch_{locf}_dataset_pie.png"
     plt.savefig(new_filepath)
     plt.close()
     return new_filepath
@@ -275,12 +275,16 @@ def train_model(
     train_labels, train_counts = count_images_in_subdirs(
         os.path.join(dataset_dir, "train")
     )
-    train_pie_chart_path = generate_pie_chart(train_labels, train_counts, locf="Train")
+    train_pie_chart_path = generate_pie_chart(
+        train_labels, train_counts, results_dir, locf="Train"
+    )
 
     val_labels, val_counts = count_images_in_subdirs(
         os.path.join(dataset_dir, "validation")
     )
-    val_pie_chart_path = generate_pie_chart(val_labels, val_counts, locf="Validation")
+    val_pie_chart_path = generate_pie_chart(
+        val_labels, val_counts, results_dir, locf="Validation"
+    )
 
     # Generate PDF report
     pdf = PDFReport()
