@@ -72,7 +72,7 @@ def print_summary_table(
             [
                 i + 1,
                 f"{train_losses[i]:.4f}",
-                f"{val_losses[i]:.4f}",
+                f"{val_losses[i]::.4f}",
                 f"{train_accuracies[i] * 100:.2f}%",
                 f"{val_accuracies[i] * 100:.2f}%",
             ]
@@ -118,8 +118,14 @@ def generate_pie_chart(labels, counts, results_dir, locf="Train"):
         shadow=True,
         startangle=90,
     )
-    plt.legend(legend_labels, loc="upper right", title=locf + " Image Count")
+    plt.legend(
+        legend_labels,
+        loc="center left",
+        bbox_to_anchor=(1, 0.5),
+        title=locf + " Image Count",
+    )
     plt.title(f"{locf} - Image Distribution")
+    plt.tight_layout()
     new_filepath = f"{results_dir}/torch_{locf}_dataset_pie.png"
     plt.savefig(new_filepath)
     plt.close()
@@ -145,10 +151,7 @@ class PDFReport(FPDF):
         self.add_page()
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, title, 0, 1, "C")
-        if w == 0:
-            self.image(image_path, x, y, w, h)
-        else:
-            self.image(image_path, x, y, w, h, type="png")
+        self.image(image_path, x, y, w, h)
         self.ln(10)
 
     def add_table(self, table, title):
@@ -157,7 +160,7 @@ class PDFReport(FPDF):
         self.cell(0, 10, title, 0, 1, "L")
         self.set_font("Arial", "", 12)
         # Add the table rows to the PDF
-        col_width = self.epw / len(table.field_names)
+        col_width = self.w / len(table.field_names)
         th = self.font_size
         for header in table.field_names:
             self.cell(col_width, th, str(header), border=1)

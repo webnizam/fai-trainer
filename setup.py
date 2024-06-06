@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="fai-trainer",
-    version="0.3.5",
+    version="0.3.6",
     author="Nizamuddin Mohamed & Michael Statelman",
     author_email="webnizam@gmail.com",
     description="A package for training and testing image classification models using PyTorch.",
