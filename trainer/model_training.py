@@ -61,7 +61,9 @@ def validate_one_epoch(val_loader, model, criterion, device):
     return running_loss / total, correct / total
 
 
-def print_summary_table(epochs, train_losses, val_losses, train_accuracies, val_accuracies):
+def print_summary_table(
+    epochs, train_losses, val_losses, train_accuracies, val_accuracies
+):
     table = PrettyTable()
     table.field_names = ["Epoch", "Train Loss", "Val Loss", "Train Acc", "Val Acc"]
 
@@ -77,6 +79,8 @@ def print_summary_table(epochs, train_losses, val_losses, train_accuracies, val_
         )
 
     print(table)
+    with open(os.path.join("results", "epoch_summary.txt"), "w") as f:
+        f.write(str(table))
     return table
 
 
@@ -228,8 +232,11 @@ def train_model(
     torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
     torch.save(model, os.path.join(results_dir, "model-full.pth"))
 
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
+    # Define the size for both figures
+    figsize = (10, 5)
+
+    # Plot Loss
+    plt.figure(figsize=figsize)
     plt.plot(train_losses, label="Train Loss")
     plt.plot(val_losses, label="Validation Loss")
     plt.xlabel("Epoch")
@@ -240,7 +247,8 @@ def train_model(
     plt.savefig(loss_plot_path)
     plt.close()
 
-    plt.figure(figsize=(10, 5))
+    # Plot Accuracy
+    plt.figure(figsize=figsize)
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
     plt.xlabel("Epoch")
@@ -259,7 +267,9 @@ def train_model(
     actual_labels, predicted_labels = get_predictions(
         model, dataloaders["validation"], device
     )
-    confusion_matrix_path = plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+    confusion_matrix_path = plot_confusion_matrix(
+        actual_labels, predicted_labels, class_names, results_dir
+    )
 
     # Generate pie charts for image distributions
     train_labels, train_counts = count_images_in_subdirs(
@@ -364,7 +374,9 @@ def test_model(
         )
 
         actual_labels, predicted_labels = get_predictions(model, test_loader, device)
-        confusion_matrix_path = plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+        confusion_matrix_path = plot_confusion_matrix(
+            actual_labels, predicted_labels, class_names, results_dir
+        )
 
         correct = 0
         total = 0
