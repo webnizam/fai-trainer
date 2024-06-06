@@ -72,7 +72,7 @@ def print_summary_table(
             [
                 i + 1,
                 f"{train_losses[i]:.4f}",
-                f"{val_losses[i]::.4f}",
+                f"{val_losses[i]:.4f}",
                 f"{train_accuracies[i] * 100:.2f}%",
                 f"{val_accuracies[i] * 100:.2f}%",
             ]
@@ -86,11 +86,9 @@ def count_images_in_subdirs(main_dir):
     labels = []
     counts = []
 
-    # Loop through each subdirectory in the main directory
     for subdir in os.listdir(main_dir):
         subdir_path = os.path.join(main_dir, subdir)
         if os.path.isdir(subdir_path):
-            # Count the number of images in the subdirectory
             image_files = natsorted(glob.glob(f"{subdir_path}/*.jpg"))
             num_images = len(image_files)
             labels.append(subdir)
@@ -101,14 +99,11 @@ def count_images_in_subdirs(main_dir):
 
 def generate_pie_chart(labels, counts, results_dir, locf="Train"):
     print("Generating chart for:" + locf)
-    myexplode = [0.1] * len(
-        labels
-    )  # Adjust this list if you want specific slices to be exploded
+    myexplode = [0.1] * len(labels)
 
-    # Combine labels and counts for legend
     legend_labels = [f"{label} ({count})" for label, count in zip(labels, counts)]
 
-    fig, ax = plt.subplots(figsize=(10, 7.5))  # Adjust the figure size
+    fig, ax = plt.subplots(figsize=(10, 7.5))
     ax.pie(
         counts,
         labels=labels,
@@ -159,7 +154,6 @@ class PDFReport(FPDF):
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, title, 0, 1, "L")
         self.set_font("Arial", "", 12)
-        # Add the table rows to the PDF
         col_width = self.w / len(table.field_names)
         th = self.font_size
         for header in table.field_names:
