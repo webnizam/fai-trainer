@@ -4,3 +4,5 @@ Pillow
 matplotlib
 tqdm
 prettytable
+natsort
+fpdf

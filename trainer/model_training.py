@@ -11,6 +11,9 @@ from PIL import Image
 from prettytable import PrettyTable
 from .confusion_matrix import get_predictions, plot_confusion_matrix
 import warnings
+import glob
+from natsort import natsorted
+from fpdf import FPDF
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -76,6 +79,83 @@ def print_summary_table(
         )
 
     print(table)
+    return table
+
+
+def count_images_in_subdirs(main_dir):
+    labels = []
+    counts = []
+
+    # Loop through each subdirectory in the main directory
+    for subdir in os.listdir(main_dir):
+        subdir_path = os.path.join(main_dir, subdir)
+        if os.path.isdir(subdir_path):
+            # Count the number of images in the subdirectory
+            image_files = natsorted(glob.glob(f"{subdir_path}/*.jpg"))
+            num_images = len(image_files)
+            labels.append(subdir)
+            counts.append(num_images)
+
+    return labels, counts
+
+
+def generate_pie_chart(labels, counts, locf="Train"):
+    print("Generating chart for:" + locf)
+    myexplode = [0.1] * len(
+        labels
+    )  # Adjust this list if you want specific slices to be exploded
+
+    # Combine labels and counts for legend
+    legend_labels = [f"{label} ({count})" for label, count in zip(labels, counts)]
+
+    fig, ax = plt.subplots(figsize=(12.8, 9.6))  # Make the chart 2x larger
+    ax.pie(
+        counts,
+        labels=labels,
+        autopct="%1.1f%%",
+        colors=plt.cm.tab20.colors,
+        explode=myexplode,
+        shadow=True,
+        startangle=90,
+    )
+    plt.legend(legend_labels, loc="upper right", title=locf + " Image Count")
+    plt.title(f"{locf} - Image Distribution")
+    new_filepath = f"runs/torch_{locf}_dataset_pie.png"
+    plt.savefig(new_filepath)
+    plt.close()
+    return new_filepath
+
+
+class PDFReport(FPDF):
+    def header(self):
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, "Training Report", 0, 1, "C")
+
+    def chapter_title(self, title):
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, title, 0, 1, "L")
+        self.ln(2)
+
+    def chapter_body(self, body):
+        self.set_font("Arial", "", 12)
+        self.multi_cell(0, 10, body)
+        self.ln()
+
+    def add_image(self, image_path, title, x=None, y=None, w=0, h=0):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, title, 0, 1, "C")
+        self.image(image_path, x, y, w, h)
+        self.ln(10)
+
+    def add_table(self, table, title):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, title, 0, 1, "L")
+        self.set_font("Arial", "", 12)
+        table_str = table.get_string()
+        self.multi_cell(0, 10, table_str)
+        self.ln(10)
 
 
 def train_model(
@@ -166,6 +246,9 @@ def train_model(
     plt.ylabel("Loss")
     plt.legend()
     plt.title("Loss over epochs")
+    loss_plot_path = os.path.join(results_dir, "loss_plot.png")
+    plt.savefig(loss_plot_path)
+    plt.close()
 
     plt.subplot(1, 2, 2)
     plt.plot(train_accuracies, label="Train Accuracy")
@@ -174,13 +257,12 @@ def train_model(
     plt.ylabel("Accuracy")
     plt.legend()
     plt.title("Accuracy over epochs")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(results_dir, "loss_accuracy_plot.png"))
+    accuracy_plot_path = os.path.join(results_dir, "accuracy_plot.png")
+    plt.savefig(accuracy_plot_path)
     plt.close()
 
     print("Training completed!")
-    print_summary_table(
+    summary_table = print_summary_table(
         epochs, train_losses, val_losses, train_accuracies, val_accuracies
     )
 
@@ -188,6 +270,33 @@ def train_model(
         model, dataloaders["validation"], device
     )
     plot_confusion_matrix(actual_labels, predicted_labels, class_names, results_dir)
+
+    # Generate pie charts for image distributions
+    train_labels, train_counts = count_images_in_subdirs(
+        os.path.join(dataset_dir, "train")
+    )
+    train_pie_chart_path = generate_pie_chart(train_labels, train_counts, locf="Train")
+
+    val_labels, val_counts = count_images_in_subdirs(
+        os.path.join(dataset_dir, "validation")
+    )
+    val_pie_chart_path = generate_pie_chart(val_labels, val_counts, locf="Validation")
+
+    # Generate PDF report
+    pdf = PDFReport()
+    pdf.add_page()
+    pdf.chapter_title("Training Summary")
+    pdf.chapter_body(
+        f"Epochs: {epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}"
+    )
+    pdf.add_table(summary_table, "Training Summary Table")
+    pdf.add_image(loss_plot_path, "Loss over Epochs", w=150)
+    pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=150)
+    pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=150)
+    pdf.add_image(val_pie_chart_path, "Validation Image Distribution", w=150)
+    pdf.output(os.path.join(results_dir, "training_report.pdf"))
+
+    print("PDF report generated successfully!")
 
 
 def test_model(
