@@ -55,6 +55,14 @@ Ensure your dataset directory has the following structure:
         ├── image2.jpg
         └── ...
 
+### Directory Clean up
+
+To clean up any prior processing or training:
+
+    fai-trainer --clean
+
+
+
 Contributing
 ------------
 
