@@ -87,6 +87,13 @@ def main():
         help="Learning rate for training (default: 0.001).",
     )
 
+    parser.add_argument(
+        "--full-model",
+        type=bool,
+        default=False,
+        help="Use full model.",
+    )
+
     args = parser.parse_args()
 
     if args.clean:
@@ -116,10 +123,12 @@ def main():
             print(f"Testing model with image: {args.image_path}")
         else:
             print("Testing model with validation dataset.")
+
         test_model(
             image_path=args.image_path,
             image_size=tuple(args.image_size),
             results_dir=args.results_dir,
+            load_full_model=args.full_model,
         )
 
 
