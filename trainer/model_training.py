@@ -1,4 +1,5 @@
 import os
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -14,6 +15,7 @@ import warnings
 import glob
 from natsort import natsorted
 from fpdf import FPDF
+import random
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -62,10 +64,17 @@ def validate_one_epoch(val_loader, model, criterion, device):
 
 
 def print_summary_table(
-    epochs, train_losses, val_losses, train_accuracies, val_accuracies
+    epochs, train_losses, val_losses, train_accuracies, val_accuracies, epoch_times
 ):
     table = PrettyTable()
-    table.field_names = ["Epoch", "Train Loss", "Val Loss", "Train Acc", "Val Acc"]
+    table.field_names = [
+        "Epoch",
+        "Train Loss",
+        "Val Loss",
+        "Train Acc",
+        "Val Acc",
+        "Elapsed Time",
+    ]
 
     for i in range(epochs):
         table.add_row(
@@ -75,6 +84,7 @@ def print_summary_table(
                 f"{val_losses[i]:.4f}",
                 f"{train_accuracies[i] * 100:.2f}%",
                 f"{val_accuracies[i] * 100:.2f}%",
+                f"{epoch_times[i]:.2f} sec",
             ]
         )
 
@@ -141,7 +151,7 @@ class PDFReport(FPDF):
 
     def chapter_body(self, body):
         self.set_font("Arial", "", 12)
-        self.multi_cell(0, 10, body)
+        self.multi_cell(0, 5, body)
         self.ln()
 
     def add_image(self, image_path, title, x=None, y=None, w=0, h=0):
@@ -149,7 +159,44 @@ class PDFReport(FPDF):
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, title, 0, 1, "C")
         self.image(image_path, x, y, w, h)
-        self.ln(10)
+        self.ln(5)
+
+    def add_inference_results(self, results):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, "Inference Results", 0, 1, "L")
+        self.ln(2)
+
+        for index, result in enumerate(results):
+            if index > 0:
+                self.add_page()
+
+
+            self.set_font("Arial", "B", 12)
+            self.cell(0, 10, "Inference Image", 0, 1, "C")
+            self.image(result["image_path"], h=50)
+            self.ln(5)
+
+            self.set_font("Arial", "", 12)
+            self.cell(0, 10, f"Predicted Class: {result['predicted_class']}", 0, 1, "L")
+            self.cell(0, 10, f"Confidence: {result['confidence']:.2f}%", 0, 1, "L")
+            self.ln(2)
+
+            self.set_font("Arial", "", 10)
+            self.cell(0, 10, "Class Probabilities", 0, 1, "L")
+            self.ln(1)
+
+            col_width = self.w / 2.5
+            self.set_font("Arial", "", 10)
+            self.cell(col_width, 10, "Class", 1)
+            self.cell(col_width, 10, "Probability", 1)
+            self.ln()
+
+            for class_name, prob in result["probabilities"]:
+                self.cell(col_width, 10, class_name, 1)
+                self.cell(col_width, 10, f"{prob:.2f}%", 1)
+                self.ln()
+            self.ln(5)
 
 
 def train_model(
@@ -208,10 +255,15 @@ def train_model(
 
     train_losses, val_losses = [], []
     train_accuracies, val_accuracies = [], []
+    epoch_times = []
+
+    total_start_time = time.time()
 
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}/{epochs}")
         print("-" * 10)
+
+        start_time = time.time()
 
         train_loss, train_acc = train_one_epoch(
             dataloaders["train"], model, criterion, optimizer, device
@@ -220,6 +272,10 @@ def train_model(
             dataloaders["validation"], model, criterion, device
         )
 
+        end_time = time.time()
+        epoch_time = end_time - start_time
+        epoch_times.append(epoch_time)
+
         train_losses.append(train_loss)
         val_losses.append(val_loss)
         train_accuracies.append(train_acc)
@@ -227,7 +283,11 @@ def train_model(
 
         print(f"Train Loss: {train_loss:.4f} Acc: {train_acc:.4f}")
         print(f"Val Loss: {val_loss:.4f} Acc: {val_acc:.4f}")
+        print(f"Elapsed Time: {epoch_time:.2f} seconds")
         print()
+
+    total_end_time = time.time()
+    total_training_time = total_end_time - total_start_time
 
     torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
     torch.save(model, os.path.join(results_dir, "model-full.pth"))
@@ -261,7 +321,7 @@ def train_model(
 
     print("Training completed!")
     summary_table = print_summary_table(
-        epochs, train_losses, val_losses, train_accuracies, val_accuracies
+        epochs, train_losses, val_losses, train_accuracies, val_accuracies, epoch_times
     )
 
     actual_labels, predicted_labels = get_predictions(
@@ -286,18 +346,53 @@ def train_model(
         val_labels, val_counts, results_dir, locf="Validation"
     )
 
+    # Randomly select 3 images from validation set for inference
+    val_image_paths = glob.glob(os.path.join(dataset_dir, "validation", "*/*.jpg"))
+    random.shuffle(val_image_paths)
+    selected_images = val_image_paths[:3]
+
+    inference_results = []
+
+    for image_path in selected_images:
+        image = Image.open(image_path).convert("RGB")
+        image_tensor = data_transforms["validation"](image).unsqueeze(0).to(device)
+        with torch.no_grad():
+            outputs = model(image_tensor)
+            probabilities = nn.functional.softmax(outputs, dim=1).squeeze()
+            _, predicted = torch.max(outputs, 1)
+            predicted_class = class_names[predicted.item()]
+            confidence = probabilities[predicted.item()] * 100
+
+            sorted_probs = sorted(
+                zip(class_names, probabilities.tolist()),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            inference_results.append(
+                {
+                    "image_path": image_path,
+                    "predicted_class": predicted_class,
+                    "confidence": confidence.item(),
+                    "probabilities": [
+                        (class_name, prob * 100) for class_name, prob in sorted_probs
+                    ],
+                }
+            )
+
     # Generate PDF report
     pdf = PDFReport()
     pdf.add_page()
     pdf.chapter_title("Training Summary")
     pdf.chapter_body(
-        f"Epochs: {epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}"
+        f"Epochs: {epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}\nTotal Training Time: {total_training_time:.2f} seconds"
     )
     pdf.add_image(loss_plot_path, "Loss over Epochs", w=190)
     pdf.add_image(accuracy_plot_path, "Accuracy over Epochs", w=190)
     pdf.add_image(train_pie_chart_path, "Train Image Distribution", w=190)
     pdf.add_image(val_pie_chart_path, "Validation Image Distribution", w=190)
     pdf.add_image(confusion_matrix_path, "Confusion Matrix", w=190)
+    pdf.add_inference_results(inference_results)
     pdf.output(os.path.join(results_dir, "training_report.pdf"))
 
     print("PDF report generated successfully!")
