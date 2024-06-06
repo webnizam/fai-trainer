@@ -35,6 +35,7 @@ def main():
     )
 
     parser.add_argument("--clean", action="store_true", help="Clean run.")
+    parser.add_argument("--full-model", action="store_true", help="Use full model.")
     parser.add_argument(
         "--prepare-data",
         action="store_true",
@@ -85,13 +86,6 @@ def main():
         type=float,
         default=0.001,
         help="Learning rate for training (default: 0.001).",
-    )
-
-    parser.add_argument(
-        "--full-model",
-        type=bool,
-        default=False,
-        help="Use full model.",
     )
 
     args = parser.parse_args()
