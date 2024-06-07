@@ -87,6 +87,13 @@ def main():
         default=0.001,
         help="Learning rate for training (default: 0.001).",
     )
+    parser.add_argument(
+        "--sampling-method",
+        type=str,
+        choices=["undersample", "oversample"],
+        default="undersample",
+        help="Sampling method to balance the dataset (default: undersample).",
+    )
 
     args = parser.parse_args()
 
@@ -99,6 +106,7 @@ def main():
             args.dataset_dir,
             image_size=tuple(args.image_size),
             processed_directory="./processed_data",
+            sampling_method=args.sampling_method,
         )
 
     if args.train:

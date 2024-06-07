@@ -90,7 +90,7 @@ def verify_jpg_images(directory):
                 os.remove(file_path)
 
 
-def suffle_image_names(directory):
+def shuffle_image_names(directory):
     def generate_random_number():
         return str(random.randint(100000, 200000))
 
