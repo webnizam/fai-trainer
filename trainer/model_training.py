@@ -171,7 +171,6 @@ class PDFReport(FPDF):
             if index > 0:
                 self.add_page()
 
-
             self.set_font("Arial", "B", 12)
             self.cell(0, 10, "Inference Image", 0, 1, "C")
             self.image(result["image_path"], h=50)
@@ -209,6 +208,8 @@ def train_model(
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     os.makedirs(results_dir, exist_ok=True)
+    # checkpoint_dir = os.path.join(results_dir, "checkpoint")
+    # os.makedirs(checkpoint_dir, exist_ok=True)
 
     data_transforms = {
         "train": transforms.Compose(
@@ -286,16 +287,22 @@ def train_model(
         print(f"Elapsed Time: {epoch_time:.2f} seconds")
         print()
 
+        torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
+        torch.save(model, os.path.join(results_dir, "model-full.pth"))
+
+        # torch.save(
+        #     model.state_dict(),
+        #     os.path.join(checkpoint_dir, f"model_epoch_{epoch + 1}.pth"),
+        # )
+        # torch.save(
+        #     model, os.path.join(checkpoint_dir, f"model-full_epoch_{epoch + 1}.pth")
+        # )
+
     total_end_time = time.time()
     total_training_time = total_end_time - total_start_time
 
-    torch.save(model.state_dict(), os.path.join(results_dir, "model.pth"))
-    torch.save(model, os.path.join(results_dir, "model-full.pth"))
-
-    # Define the size for both figures
     figsize = (10, 5)
 
-    # Plot Loss
     plt.figure(figsize=figsize)
     plt.plot(train_losses, label="Train Loss")
     plt.plot(val_losses, label="Validation Loss")
@@ -307,7 +314,6 @@ def train_model(
     plt.savefig(loss_plot_path)
     plt.close()
 
-    # Plot Accuracy
     plt.figure(figsize=figsize)
     plt.plot(train_accuracies, label="Train Accuracy")
     plt.plot(val_accuracies, label="Validation Accuracy")
@@ -331,7 +337,6 @@ def train_model(
         actual_labels, predicted_labels, class_names, results_dir
     )
 
-    # Generate pie charts for image distributions
     train_labels, train_counts = count_images_in_subdirs(
         os.path.join(dataset_dir, "train")
     )
@@ -346,7 +351,6 @@ def train_model(
         val_labels, val_counts, results_dir, locf="Validation"
     )
 
-    # Randomly select 3 images from validation set for inference
     val_image_paths = glob.glob(os.path.join(dataset_dir, "validation", "*/*.jpg"))
     random.shuffle(val_image_paths)
     selected_images = val_image_paths[:3]
@@ -380,7 +384,6 @@ def train_model(
                 }
             )
 
-    # Generate PDF report
     pdf = PDFReport()
     pdf.add_page()
     pdf.chapter_title("Training Summary")
