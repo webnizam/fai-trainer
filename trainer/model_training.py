@@ -206,7 +206,13 @@ def train_model(
     results_dir="results",
     learning_rate=0.001,
 ):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if hasattr(torch, 'xpu') and torch.xpu.is_available():
+        device = torch.device("xpu")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     os.makedirs(results_dir, exist_ok=True)
     checkpoint_dir = os.path.join(results_dir, "checkpoint")
     os.makedirs(checkpoint_dir, exist_ok=True)
