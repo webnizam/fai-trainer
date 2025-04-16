@@ -224,6 +224,43 @@ def get_available_device():
     print("No GPU acceleration available. Using CPU.")
     return torch.device("cpu")
 
+def get_model(model_type="vit_b_16", num_classes=2, pretrained=True):
+    """Get a model with specified architecture
+    Args:
+        model_type: str, one of ["resnet50", "vit_b_16", "vit_l_16", "efficientnet_v2_s", "convnext_tiny"]
+        num_classes: int, number of output classes
+        pretrained: bool, whether to use pretrained weights
+    """
+    if model_type == "resnet50":
+        model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1 if pretrained else None)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, num_classes)
+    
+    elif model_type == "vit_b_16":
+        model = models.vit_b_16(weights=models.ViT_B_16_Weights.IMAGENET1K_V1 if pretrained else None)
+        num_ftrs = model.heads.head.in_features
+        model.heads.head = nn.Linear(num_ftrs, num_classes)
+    
+    elif model_type == "vit_l_16":
+        model = models.vit_l_16(weights=models.ViT_L_16_Weights.IMAGENET1K_V1 if pretrained else None)
+        num_ftrs = model.heads.head.in_features
+        model.heads.head = nn.Linear(num_ftrs, num_classes)
+    
+    elif model_type == "efficientnet_v2_s":
+        model = models.efficientnet_v2_s(weights=models.EfficientNet_V2_S_Weights.IMAGENET1K_V1 if pretrained else None)
+        num_ftrs = model.classifier[-1].in_features
+        model.classifier[-1] = nn.Linear(num_ftrs, num_classes)
+    
+    elif model_type == "convnext_tiny":
+        model = models.convnext_tiny(weights=models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1 if pretrained else None)
+        num_ftrs = model.classifier[-1].in_features
+        model.classifier[-1] = nn.Linear(num_ftrs, num_classes)
+    
+    else:
+        raise ValueError(f"Unknown model type: {model_type}. Supported types are: resnet50, vit_b_16, vit_l_16, efficientnet_v2_s, convnext_tiny")
+    
+    return model
+
 def train_model(
     batch_size=32,
     epochs=10,
@@ -231,6 +268,8 @@ def train_model(
     dataset_dir="datasets",
     results_dir="results",
     learning_rate=0.001,
+    model_type="vit_b_16",
+    pretrained=True,
 ):
     device = get_available_device()
     print(f"Using device: {device}")
@@ -273,13 +312,23 @@ def train_model(
     class_names = image_datasets["train"].classes
     num_classes = len(class_names)
 
-    model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, num_classes)
+    model = get_model(model_type=model_type, num_classes=num_classes, pretrained=pretrained)
     model = model.to(device)
 
+    # Get trainable parameters based on model type
+    if model_type == "resnet50":
+        trainable_params = model.fc.parameters()
+    elif model_type.startswith("vit"):
+        trainable_params = model.heads.head.parameters()
+    elif model_type == "efficientnet_v2_s":
+        trainable_params = model.classifier[-1].parameters()
+    elif model_type == "convnext_tiny":
+        trainable_params = model.classifier[-1].parameters()
+    else:
+        trainable_params = model.parameters()
+
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.fc.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(trainable_params, lr=learning_rate)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
     train_losses, val_losses = [], []
@@ -455,7 +504,12 @@ def train_model(
 
 
 def test_model(
-    image_path=None, image_size=(224, 224), results_dir="results", load_full_model=False
+    image_path=None,
+    image_size=(224, 224),
+    results_dir="results",
+    load_full_model=False,
+    model_type="vit_b_16",
+    pretrained=True,
 ):
     model_file = "model-full.pth" if load_full_model else "model.pth"
 
@@ -480,9 +534,7 @@ def test_model(
     if load_full_model:
         model = torch.load(os.path.join(results_dir, model_file), map_location=device)
     else:
-        model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, len(class_names))
+        model = get_model(model_type=model_type, num_classes=len(class_names), pretrained=pretrained)
         model.load_state_dict(
             torch.load(os.path.join(results_dir, model_file), map_location=device)
         )

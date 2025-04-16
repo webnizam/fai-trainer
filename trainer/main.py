@@ -57,6 +57,13 @@ def main():
         help="Path to the dataset directory (default: 'datasets').",
     )
     parser.add_argument(
+        "--model-type",
+        type=str,
+        choices=["resnet50", "vit_b_16", "vit_l_16", "efficientnet_v2_s", "convnext_tiny"],
+        default="vit_b_16",
+        help="Model architecture to use (default: vit_b_16).",
+    )
+    parser.add_argument(
         "--batch-size",
         type=int,
         default=16,
@@ -94,6 +101,11 @@ def main():
         default="undersample",
         help="Sampling method to balance the dataset (default: undersample).",
     )
+    parser.add_argument(
+        "--no-pretrained",
+        action="store_true",
+        help="Do not use pretrained weights.",
+    )
 
     args = parser.parse_args()
 
@@ -110,7 +122,7 @@ def main():
         )
 
     if args.train:
-        print("Training model with dataset from: ./processed_data")
+        print(f"Training model ({args.model_type}) with dataset from: ./processed_data")
         train_model(
             batch_size=args.batch_size,
             epochs=args.epochs,
@@ -118,6 +130,8 @@ def main():
             dataset_dir="./processed_data",
             results_dir=args.results_dir,
             learning_rate=args.learning_rate,
+            model_type=args.model_type,
+            pretrained=not args.no_pretrained,
         )
 
     if args.test:
@@ -131,6 +145,8 @@ def main():
             image_size=tuple(args.image_size),
             results_dir=args.results_dir,
             load_full_model=args.full_model,
+            model_type=args.model_type,
+            pretrained=not args.no_pretrained,
         )
 
 
