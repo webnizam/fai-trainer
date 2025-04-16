@@ -198,6 +198,32 @@ class PDFReport(FPDF):
             self.ln(5)
 
 
+def get_available_device():
+    # Try Intel XPU first
+    try:
+        import intel_extension_for_pytorch  # noqa: F401
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            return torch.device("xpu")
+    except ImportError:
+        print("Intel Extension for PyTorch not found. XPU support disabled.")
+    except Exception as e:
+        print(f"Error initializing XPU support: {str(e)}. XPU support disabled.")
+    
+    # Try CUDA next
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    
+    # Try MPS (Apple Silicon)
+    try:
+        if hasattr(torch, 'mps') and torch.backends.mps.is_available():
+            return torch.device("mps")
+    except Exception as e:
+        print(f"Error initializing MPS support: {str(e)}. MPS support disabled.")
+    
+    # Fall back to CPU
+    print("No GPU acceleration available. Using CPU.")
+    return torch.device("cpu")
+
 def train_model(
     batch_size=32,
     epochs=10,
@@ -206,12 +232,8 @@ def train_model(
     results_dir="results",
     learning_rate=0.001,
 ):
-    if hasattr(torch, 'xpu') and torch.xpu.is_available():
-        device = torch.device("xpu")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
+    device = get_available_device()
+    print(f"Using device: {device}")
 
     os.makedirs(results_dir, exist_ok=True)
     checkpoint_dir = os.path.join(results_dir, "checkpoint")
@@ -441,7 +463,8 @@ def test_model(
         print("Model not found. Train the model first.")
         return
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_available_device()
+    print(f"Using device: {device}")
 
     data_transforms = transforms.Compose(
         [

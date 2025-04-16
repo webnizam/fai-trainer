@@ -5,10 +5,11 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="fai-trainer",
-    version="0.4.3",
+    version="0.5.0",
     author="Nizamuddin Mohamed & Michael Statelman",
     author_email="webnizam@gmail.com",
-    description="A package for training and testing image classification models using PyTorch.",
+    description=
+    "A package for training and testing image classification models using PyTorch.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/webnizam/fai-trainer",
@@ -26,6 +27,9 @@ setup(
         "natsort",
         "fpdf",
     ],
+    extras_require={
+        "xpu": ["intel-extension-for-pytorch"],  # Optional Intel XPU support
+    },
     entry_points={
         "console_scripts": [
             "fai-trainer=trainer.main:main",

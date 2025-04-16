@@ -13,18 +13,38 @@ Whether you're a seasoned AI expert needing a quick trained model turnaround or 
 Features
 --------
 
+*   **Multi-Device Support**: Automatic selection of the best available device (XPU, CUDA, MPS, or CPU) for training and inference
 *   **Data Preparation**: Convert image formats, resize images, remove duplicates, and ensure no corrupted images.
 *   **Dataset Splitting**: Automatically split datasets into training and validation sets with a specified ratio.
 *   **Model Training**: Train a ResNet50 model on the prepared dataset with configurable batch size, number of epochs, and image dimensions.
 *   **Progress Tracking**: Visual progress tracking for both training and validation phases.
 *   **Model Testing**: Load a trained model to test on a specific image or the validation dataset, and save the results.
 
+System Requirements
+-----------------
+
+*   Python 3.8 or higher
+*   For GPU acceleration:
+    - NVIDIA GPU with CUDA support
+    - Intel GPU with XPU support (requires intel-extension-for-pytorch)
+    - Apple Silicon with MPS support (requires macOS 12.3+)
+*   4GB RAM minimum (8GB+ recommended)
+
 Installation
 ------------
 
-To install the FAI-Trainer package, use pip:
+To install the basic FAI-Trainer package:
 
     pip install fai-trainer
+
+For Intel GPU acceleration support:
+
+    pip install fai-trainer[xpu]
+
+If Intel XPU support fails to install or initialize, the package will automatically fall back to other available devices in this order:
+1. NVIDIA CUDA GPU (if available)
+2. Apple Silicon MPS (if available)
+3. CPU (always available as fallback)
 
 Usage
 -----
@@ -65,8 +85,6 @@ Ensure your dataset directory has the following structure:
 To clean up any prior processing or training:
 
     fai-trainer --clean
-
-
 
 Contributing
 ------------
