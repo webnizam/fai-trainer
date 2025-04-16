@@ -261,6 +261,37 @@ def get_model(model_type="vit_b_16", num_classes=2, pretrained=True):
     
     return model
 
+def get_model_image_size(model_type, requested_size=None):
+    """Get the appropriate image size for a given model type
+    Args:
+        model_type: str, the type of model
+        requested_size: tuple, optional user-requested size (height, width)
+    Returns:
+        tuple: (height, width)
+    """
+    # Default sizes for each model type
+    model_sizes = {
+        "vit_b_16": (224, 224),  # ViT-Base standard size
+        "vit_l_16": (224, 224),  # ViT-Large standard size
+        "resnet50": (224, 224),  # ResNet standard size
+        "efficientnet_v2_s": (384, 384),  # EfficientNetV2-S preferred size
+        "convnext_tiny": (224, 224),  # ConvNeXt standard size
+    }
+
+    if requested_size is not None:
+        # For ViT models, ensure the image size is valid (must be divisible by patch size 16)
+        if model_type.startswith("vit"):
+            height, width = requested_size
+            if height % 16 != 0 or width % 16 != 0:
+                print(f"Warning: {model_type} requires image dimensions to be divisible by 16.")
+                height = ((height + 15) // 16) * 16
+                width = ((width + 15) // 16) * 16
+                print(f"Adjusting image size to: ({height}, {width})")
+                return (height, width)
+        return requested_size
+    
+    return model_sizes[model_type]
+
 def train_model(
     batch_size=32,
     epochs=10,
@@ -273,6 +304,10 @@ def train_model(
 ):
     device = get_available_device()
     print(f"Using device: {device}")
+
+    # Get appropriate image size for the model
+    image_size = get_model_image_size(model_type, image_size)
+    print(f"Using image size: {image_size}")
 
     os.makedirs(results_dir, exist_ok=True)
     checkpoint_dir = os.path.join(results_dir, "checkpoint")
@@ -519,6 +554,10 @@ def test_model(
 
     device = get_available_device()
     print(f"Using device: {device}")
+
+    # Get appropriate image size for the model
+    image_size = get_model_image_size(model_type, image_size)
+    print(f"Using image size: {image_size}")
 
     data_transforms = transforms.Compose(
         [

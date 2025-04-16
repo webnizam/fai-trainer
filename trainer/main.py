@@ -80,7 +80,7 @@ def main():
         type=int,
         nargs=2,
         default=(224, 224),
-        help="Image dimensions (height, width) (default: (224, 224)).",
+        help="Image dimensions (height, width) (default: (224, 224)). For ViT models, dimensions will be adjusted to be divisible by 16.",
     )
     parser.add_argument(
         "--results-dir",
