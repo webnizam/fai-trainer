@@ -15,6 +15,7 @@ Features
 
 *   **Multi-Model Support**: Choose from multiple architectures including:
     - Vision Transformer (ViT-B/16) (default)
+    - Vision Transformer (ViT-Tiny/16) with augmented regularization
     - ResNet50
     - Vision Transformer (ViT-L/16)
     - EfficientNetV2-S
@@ -61,7 +62,11 @@ To run data preparation and training with the default ViT-B/16:
 
     fai-trainer --prepare-data --train --batch-size 16 --epochs 3 --image-size 224 224
 
-To train with a different model architecture:
+To train with ViT-Tiny (recommended for faster training):
+
+    fai-trainer --train --model-type vit_tiny_384 --batch-size 32 --epochs 5 --image-size 384 384
+
+To train with other model architectures:
 
     fai-trainer --train --model-type resnet50 --batch-size 32 --epochs 5
     fai-trainer --train --model-type efficientnet_v2_s --batch-size 32 --epochs 3
@@ -69,6 +74,7 @@ To train with a different model architecture:
 
 Available model types:
 - vit_b_16 (Vision Transformer Base, default)
+- vit_tiny_384 (Vision Transformer Tiny, ImageNet-21k pretrained + ImageNet-1k fine-tuned)
 - resnet50 (ResNet50)
 - vit_l_16 (Vision Transformer Large)
 - efficientnet_v2_s (EfficientNetV2 Small)
@@ -76,15 +82,28 @@ Available model types:
 
 To train without using pretrained weights:
 
-    fai-trainer --train --model-type vit_b_16 --no-pretrained
+    fai-trainer --train --model-type vit_tiny_384 --no-pretrained
+
+### Model-specific Image Size Requirements:
+
+Each model architecture has specific image size requirements:
+
+- **ViT-B/16 (default)**: Requires dimensions divisible by 16. Recommended sizes: 224x224, 384x384, 512x512
+- **ViT-Tiny/384**: Requires exactly 384x384
+- **ViT-L/16**: Requires dimensions divisible by 16. Recommended sizes: 224x224, 384x384, 512x512
+- **ResNet50**: Minimum size 32x32, recommended 224x224
+- **EfficientNetV2-S**: Minimum size 32x32, recommended 384x384
+- **ConvNeXt-Tiny**: Minimum size 32x32, recommended 224x224
+
+If you don't specify an image size, the recommended size for each model will be used automatically. If you specify an invalid size for a model, the training/testing will be aborted with an explanation of the requirements.
 
 ### Model Testing
 
 To test the model on a specific image:
 
-    fai-trainer --test --image-path path/to/your/image.jpg --model-type vit_b_16
+    fai-trainer --test --image-path path/to/your/image.jpg --model-type vit_tiny_384 --image-size 384 384
 
-Note: When testing, make sure to use the same model type that was used for training.
+Note: When testing, make sure to use the same model type and image size that was used for training.
 
 Directory Structure
 -------------------

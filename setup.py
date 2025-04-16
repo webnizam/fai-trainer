@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="fai-trainer",
-    version="0.5.2",
+    version="0.5.3",
     author="Nizamuddin Mohamed & Michael Statelman",
     author_email="webnizam@gmail.com",
     description=
@@ -26,6 +26,7 @@ setup(
         "prettytable",
         "natsort",
         "fpdf",
+        "timm>=0.9.0",
     ],
     extras_require={
         "xpu": ["intel-extension-for-pytorch"],  # Optional Intel XPU support

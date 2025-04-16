@@ -227,11 +227,15 @@ def get_available_device():
 def get_model(model_type="vit_b_16", num_classes=2, pretrained=True):
     """Get a model with specified architecture
     Args:
-        model_type: str, one of ["resnet50", "vit_b_16", "vit_l_16", "efficientnet_v2_s", "convnext_tiny"]
+        model_type: str, one of ["resnet50", "vit_b_16", "vit_l_16", "vit_tiny_384", "efficientnet_v2_s", "convnext_tiny"]
         num_classes: int, number of output classes
         pretrained: bool, whether to use pretrained weights
     """
-    if model_type == "resnet50":
+    if model_type == "vit_tiny_384":
+        import timm
+        model = timm.create_model('vit_tiny_patch16_384.augreg_in21k_ft_in1k', pretrained=pretrained, num_classes=num_classes)
+    
+    elif model_type == "resnet50":
         model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1 if pretrained else None)
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, num_classes)
@@ -257,7 +261,7 @@ def get_model(model_type="vit_b_16", num_classes=2, pretrained=True):
         model.classifier[-1] = nn.Linear(num_ftrs, num_classes)
     
     else:
-        raise ValueError(f"Unknown model type: {model_type}. Supported types are: resnet50, vit_b_16, vit_l_16, efficientnet_v2_s, convnext_tiny")
+        raise ValueError(f"Unknown model type: {model_type}. Supported types are: resnet50, vit_b_16, vit_l_16, vit_tiny_384, efficientnet_v2_s, convnext_tiny")
     
     return model
 
@@ -267,30 +271,80 @@ def get_model_image_size(model_type, requested_size=None):
         model_type: str, the type of model
         requested_size: tuple, optional user-requested size (height, width)
     Returns:
-        tuple: (height, width)
+        tuple: (height, width) or None if size is invalid
     """
-    # Default sizes for each model type
+    # Default and allowed sizes for each model type
     model_sizes = {
-        "vit_b_16": (224, 224),  # ViT-Base standard size
-        "vit_l_16": (224, 224),  # ViT-Large standard size
-        "resnet50": (224, 224),  # ResNet standard size
-        "efficientnet_v2_s": (384, 384),  # EfficientNetV2-S preferred size
-        "convnext_tiny": (224, 224),  # ConvNeXt standard size
+        "vit_b_16": {
+            "default": (224, 224),
+            "allowed": [(224, 224), (384, 384), (512, 512)],
+            "patch_size": 16
+        },
+        "vit_l_16": {
+            "default": (224, 224),
+            "allowed": [(224, 224), (384, 384), (512, 512)],
+            "patch_size": 16
+        },
+        "vit_tiny_384": {
+            "default": (384, 384),
+            "allowed": [(384, 384)],  # Only allow 384x384 for this specific model
+            "patch_size": 16
+        },
+        "resnet50": {
+            "default": (224, 224),
+            "allowed": None,  # Any size >= 32x32 is okay
+            "min_size": 32
+        },
+        "efficientnet_v2_s": {
+            "default": (384, 384),
+            "allowed": [(224, 224), (384, 384)],  # Common sizes for EfficientNetV2
+            "min_size": 32
+        },
+        "convnext_tiny": {
+            "default": (224, 224),
+            "allowed": [(224, 224), (384, 384)],
+            "min_size": 32
+        }
     }
 
-    if requested_size is not None:
-        # For ViT models, ensure the image size is valid (must be divisible by patch size 16)
-        if model_type.startswith("vit"):
-            height, width = requested_size
-            if height % 16 != 0 or width % 16 != 0:
-                print(f"Warning: {model_type} requires image dimensions to be divisible by 16.")
-                height = ((height + 15) // 16) * 16
-                width = ((width + 15) // 16) * 16
-                print(f"Adjusting image size to: ({height}, {width})")
-                return (height, width)
-        return requested_size
+    model_config = model_sizes[model_type]
     
-    return model_sizes[model_type]
+    if requested_size is None:
+        return model_config["default"]
+
+    height, width = requested_size
+
+    # For ViT models, check patch size and allowed sizes
+    if model_type.startswith("vit"):
+        patch_size = model_config["patch_size"]
+        if height % patch_size != 0 or width % patch_size != 0:
+            print(f"Error: {model_type} requires image dimensions to be divisible by {patch_size}")
+            print(f"Suggested sizes: {model_config['allowed']}")
+            return None
+        
+        # For ViT-Tiny-384, enforce exact size
+        if model_type == "vit_tiny_384" and (height, width) != (384, 384):
+            print(f"Error: {model_type} requires exactly 384x384 image size")
+            return None
+        
+        # For other ViTs, check if size is in allowed list
+        if model_config["allowed"] is not None and (height, width) not in model_config["allowed"]:
+            print(f"Warning: {model_type} works best with these sizes: {model_config['allowed']}")
+            print(f"Using non-standard size: ({height}, {width})")
+    
+    # For CNN models, check minimum size
+    else:
+        min_size = model_config["min_size"]
+        if height < min_size or width < min_size:
+            print(f"Error: {model_type} requires minimum image dimensions of {min_size}x{min_size}")
+            return None
+        
+        # Check if model has preferred sizes
+        if model_config["allowed"] is not None and (height, width) not in model_config["allowed"]:
+            print(f"Warning: {model_type} works best with these sizes: {model_config['allowed']}")
+            print(f"Using non-standard size: ({height}, {width})")
+
+    return (height, width)
 
 def train_model(
     batch_size=32,
@@ -306,7 +360,11 @@ def train_model(
     print(f"Using device: {device}")
 
     # Get appropriate image size for the model
-    image_size = get_model_image_size(model_type, image_size)
+    validated_size = get_model_image_size(model_type, image_size)
+    if validated_size is None:
+        print("Training aborted due to invalid image size.")
+        return
+    image_size = validated_size
     print(f"Using image size: {image_size}")
 
     os.makedirs(results_dir, exist_ok=True)
@@ -556,7 +614,11 @@ def test_model(
     print(f"Using device: {device}")
 
     # Get appropriate image size for the model
-    image_size = get_model_image_size(model_type, image_size)
+    validated_size = get_model_image_size(model_type, image_size)
+    if validated_size is None:
+        print("Testing aborted due to invalid image size.")
+        return
+    image_size = validated_size
     print(f"Using image size: {image_size}")
 
     data_transforms = transforms.Compose(

@@ -6,3 +6,4 @@ tqdm
 prettytable
 natsort
 fpdf
+timm>=0.9.0

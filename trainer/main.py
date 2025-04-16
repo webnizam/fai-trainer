@@ -59,7 +59,7 @@ def main():
     parser.add_argument(
         "--model-type",
         type=str,
-        choices=["resnet50", "vit_b_16", "vit_l_16", "efficientnet_v2_s", "convnext_tiny"],
+        choices=["resnet50", "vit_b_16", "vit_l_16", "vit_tiny_384", "efficientnet_v2_s", "convnext_tiny"],
         default="vit_b_16",
         help="Model architecture to use (default: vit_b_16).",
     )
